@@ -1,0 +1,8 @@
+*~
+.DS_Store
+*.jar
+build
+*.iml
+*.iws
+*.ipr
+build.properties

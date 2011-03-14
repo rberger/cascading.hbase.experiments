@@ -1,0 +1,162 @@
+<?xml version="1.0"?>
+
+<project name="test_cascading_hbase" default="build" basedir=".">
+
+  <!-- load properties first -->
+  <!--<property file="${user.home}/${name}.build.properties" />-->
+  <!--<property file="${root}/build.properties" />-->
+
+  <!-- these are optional, only used if you uncomment the project.class.path filesets below -->
+
+  <property name="hadoop.version" value="0.20.2"/>
+  <property name="hadoop.home" location="${basedir}/../hadoop-${hadoop.version}"/>
+  <property name="hadoop.lib" location="${hadoop.home}/lib"/>
+
+  <property name="hbase.version" value="0.20.3"/>
+  <property name="hbase.home" location="${basedir}/../hbase-${hbase.version}"/>
+  <property name="hbase.lib" location="${hbase.home}/lib"/>
+
+
+  <!-- assumes Cascading shares the same parent directory, change if necessary -->
+  <property name="cascading.version" value="1.2.1-hadoop-0.19.2+"/>
+  <property name="cascading.home" location="${basedir}/../cascading-${cascading.version}"/>
+  <property name="cascading.libs" value="${cascading.home}/lib"/>
+  <property name="cascading.libs.core" value="${cascading.libs}"/>
+  <property name="cascading.libs.xml" value="${cascading.libs}/xml"/>
+
+  <condition property="cascading.path" value="${cascading.home}/build"
+             else="${cascading.home}">
+    <available file="${cascading.home}/build"/>
+  </condition>
+
+  <!-- Cascading.hbase -->
+  <property name="cascading.hbase.version" value="cwensel"/>
+  <property name="cascading.hbase.home" location="${basedir}/../cascading.hbase-${cascading.hbase.version}"/>
+
+  <property name="cascading.hbase.path" location="${cascading.hbase.home}/build"/>
+
+  <property name="src.dir" location="${basedir}/src/java"/>
+  <property name="src.test" location="${basedir}/src/test"/>
+
+  <available file="${src.dir}" type="dir" property="main.available"/>
+  <available file="${src.test}" type="dir" property="test.available"/>
+
+  <property name="conf.dir" location="${hadoop.home}/conf"/>
+
+  <property name="lib.dir" location="${basedir}/lib"/>
+
+  <property name="build.dir" location="${basedir}/build/"/>
+  <property name="build.classes" location="${build.dir}/classes"/>
+  <property name="build.test" location="${build.dir}/test"/>
+
+  <property name="dist" location="dist"/>
+
+  <path id="project.class.path">
+    <pathelement location="${build.classes}"/>
+    <pathelement location="${build.test}"/>
+
+    <fileset dir="${cascading.path}">
+      <include name="cascading-core-*.jar"/>
+      <include name="cascading-xml-*.jar"/>
+      <include name="cascading-test-*.jar"/>
+    </fileset>
+
+    <fileset dir="${cascading.hbase.path}">
+      <include name="cascading-hbase.jar"/>
+    </fileset>
+
+    <fileset dir="${lib.dir}">
+      <include name="*.jar"/>
+    </fileset>
+
+    <!-- only enable if you directly access Hadoop code in your project -->
+    <!--<fileset dir="${hadoop.lib}">-->
+    <!--<include name="*.jar"/>-->
+    <!--</fileset>-->
+
+    <!--<fileset dir="${hadoop.root}">-->
+    <!--<include name="*.jar"/>-->
+    <!--</fileset>-->
+
+  </path>
+
+  <target name="clean">
+
+    <echo message="cleaning..."/>
+    <delete dir="${build.dir}"/>
+    <delete dir="${dist}"/>
+    <delete dir="${ant.project.name}.tgz"/>
+
+  </target>
+
+  <target name="build">
+
+    <echo message="building..."/>
+    <mkdir dir="${build.classes}"/>
+    <mkdir dir="${lib.dir}"/>
+
+    <javac srcdir="${src.dir}" destdir="${build.classes}" verbose="off">
+      <classpath refid="project.class.path"/>
+    </javac>
+
+    <copy todir="${build.classes}">
+      <fileset dir="${src.dir}">
+        <exclude name="**/*.java"/>
+      </fileset>
+    </copy>
+
+  </target>
+
+  <target name="jar" depends="build" description="creates a Hadoop ready jar will all dependencies">
+
+    <!-- copy Cascading classes and libraries -->
+    <copy todir="${build.classes}/lib">
+      <fileset dir="${cascading.path}">
+        <include name="cascading-core-*.jar"/>
+        <include name="cascading-xml-*.jar"/>
+      </fileset>
+      <fileset dir="${cascading.hbase.path}">
+        <include name="cascading-hbase.jar"/>
+      </fileset>
+      <fileset dir="${cascading.libs.core}" includes="*.jar"/>
+      <fileset dir="${cascading.libs.xml}" includes="*.jar"/>
+    </copy>
+
+    <jar jarfile="${build.dir}/${ant.project.name}.jar">
+      <fileset dir="${build.classes}"/>
+      <fileset dir="${basedir}" includes="lib/"/>
+      <manifest>
+        <attribute name="Main-Class" value="${ant.project.name}/Main"/>
+      </manifest>
+    </jar>
+
+  </target>
+
+  <target name="dist" depends="clean" description="packages current project">
+
+    <mkdir dir="${dist}"/>
+
+    <copy todir="${dist}">
+
+      <fileset dir=".">
+        <include name="data/**"/>
+        <include name="src/**"/>
+        <include name="lib/**"/>
+        <include name="build.xml"/>
+        <include name="README.TXT"/>
+      </fileset>
+
+    </copy>
+
+  </target>
+
+  <target name="tar" depends="dist" description="creates an archive of current project">
+    <tar destfile="${ant.project.name}.tgz"
+         compression="gzip">
+      <tarfileset dir="dist/" prefix="${ant.project.name}">
+        <include name="**/**"/>
+      </tarfileset>
+    </tar>
+  </target>
+
+</project>
