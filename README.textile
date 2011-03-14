@@ -2,7 +2,7 @@ h1. cascading.hbase.experiments
 
 h2. DESCRIPTION:
 
-"Cascading.hbase":https://github.com/cwensel/cascading.hbase is a module for the "Cascading":http://www.cascading.org/ Framework.  Cascading is a _Data Processing API, Process Planner, and Process Scheduler used for defining and executing complex, scale-free, and fault tolerant data processing workflows on an "Apache Hadoop":http://hadoop.apache.org/ cluster. All without having to 'think' in MapReduce._
+"Cascading.hbase":https://github.com/cwensel/cascading.hbase is a module that adds an "HBase":http://hbase.apache.org tap to the "Cascading":http://www.cascading.org/ Framework.  Cascading is a _Data Processing API, Process Planner, and Process Scheduler used for defining and executing complex, scale-free, and fault tolerant data processing workflows on an "Apache Hadoop":http://hadoop.apache.org/ cluster. All without having to 'think' in MapReduce._
 
 I could not find any full end-to-end examples of a cascading.hbase program that would run on a Hadoop/HBase cluster. This was a drag as I was trying to figure out how to make cascading.hbase to work at all. It looks like no one actually makes sure that the Unit Tests actually run. And all the documents say to use the Unit tests as examples of how to use cascading.hbase.
 
