@@ -14,7 +14,7 @@ h2. Version Interactions
 
 One of the big issues is that cascading.hbase does not have an offical maintainer at this point.  In the meantime, Hadoop and HBase has been evolving and have depreciated many of the API's that Cascading and cascading.hbase use.
 
-As far as I can tell, there is no implementation of cascading.hbase that will work with HBase-0.20.x and HBase-0.90.x.
+There are several forks of cascading.hbase and its not clear as to what version of Cascading/Hadoop/HBase each of the forks will or will not work with. As I was stumbling around all this, I saw that Ryan Rawson had updated his fork in the last couple of days. (most of the other forks are months if not years old). I pinged Ryan and he informed me that StumbleUpon is actively using cascading.hbase. He told me what versions of Cascading, HBase and Hadoop that his fork is known to work with. This was enough to give me hope that its possible to make things work. I still didn't have something to test it with. Thus this project.
 
 So far I have been able to get this example working with HBase-0.90.0. I had to use the following:
 
@@ -170,3 +170,6 @@ iterator.next() = fields: ['num', 'lower', 'upper'] tuple: ['5', 'e', 'E']
 
 If there were Exceptions, you have to figure them out. If the Exception happened inside of the mapreduce job, you wan't see much on the stdout.  You'll have to look at the hadoop jobtracker logs. The location of the hadoop logs is system dependent. Sometimes they are in $HADOOP_HOME/logs
 
+h2. The Future
+
+I hope to get this to work with HBase 0.20.3 (which we are still using, though hopefuly not for long). The main next goal is to use cascading.hbase with "Cascalog":http://cascalog.org.
