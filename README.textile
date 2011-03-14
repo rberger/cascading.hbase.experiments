@@ -74,9 +74,7 @@ You should end up with the following jar in ~/work/cascading.hbase-ryanobjc/buil
 
 h2. Building jar to pass to Hadoop
 
-The ant build.xml is based on the build.xml from the
-"cascading.samples.wordcount":https://github.com/cwensel/cascading.samples/tree/master/wordcount
-build.xml.
+The ant build.xml is based on the build.xml from the "cascading.samples.wordcount":https://github.com/cwensel/cascading.samples/tree/master/wordcount build.xml.
 
 The build.xml assumes that all the needed packages are parellel to this project. You can override them on the command line but I found it made more sense to update the build.xml to help my sanity.
 
