@@ -1,0 +1,211 @@
+h1. cascading.hbase.experiments
+
+h2. DESCRIPTION:
+
+cascading.hbase:https://github.com/cwensel/cascading.hbase is a module
+for the Cascading:http://www.cascading.org/ Framework.  Cascading is a
+_Data Processing API, Process Planner, and Process Scheduler used for
+defining and executing complex, scale-free, and fault tolerant data
+processing workflows on an "Apache Hadoop":http://hadoop.apache.org/
+cluster. All without having to 'think' in MapReduce._
+
+I could not find any full end-to-end examples of a cascading.hbase
+program that would run on a Hadoop/HBase cluster. This was a drag as I
+was trying to figure out how to make cascading.hbase to work at
+all. It looks like no one actually makes sure that the Unit Tests
+actually run. And all the documents say to use the Unit tests as examples of how to use cascading.hbase.
+
+The "HBase Wiki page on
+cascading.hbase":http://wiki.apache.org/hadoop/Hbase/Cascading has an
+example but it doesn't show a Main, any of the import statements or
+what kind of input data the program expected, let alone how to run it.
+
+This project takes that example and trys to show what you need to do
+to actually make it work.
+
+h2. Version Interactions
+
+One of the big issues is that cascading.hbase does not have an offical
+maintainer at this point.  In the meantime, Hadoop and HBase has been
+evolving and have depreciated many of the API's that Cascading and
+cascading.hbase use. 
+
+As far as I can tell, there is no implementation of cascading.hbase that will work with HBase-0.20.x and HBase-0.90.x.
+
+So far I have been able to get this example working with HBase-0.90.0. I had to use the following:
+
+* "cascading from a fork (master branch) by Jean-Daniel Cryans":https://github.com/jdcryans/cascading
+* "cascading.hbase from a fork (master branch) by Ryan Rawson":https://github.com/ryanobjc/cascading.hbase
+* "hadoop-0.20.2":http://www.apache.org/dyn/closer.cgi/hadoop/core/ (though any hadoop 0.20.0+ would probably work)
+* "hbase-0.90.0":http://www.apache.org/dyn/closer.cgi/hbase (though 0.90.1 would probably work)
+
+h2. Building the dependencies
+
+You will need to build the jars for cascading and cascading.hbase from
+the above git repositories. For this example we'll assume that you
+will create a directory _cascading_ in your home directory. We'll
+refer to this top level directory as <code>~/work</code>. You can of
+course put it anywhere you like but all these examples will assume
+that all the dependencies are in this directory as parallel
+directories.
+
+Also asssumes you have downloaded the Haddoop and HBase gziped tar distributions in ~/Downloads.
+
+<pre>
+<code>
+mkdir ~/work
+cd ~/work
+tar xvzf ~/Downloads/hadoop-0.20.2.tar.gz
+tar xvzf ~/Downloads/hbase-0.90.0.tar.gz
+git clone  https://github.com/jdcryans/cascading cascading-jdcryans
+git clone https://github.com/ryanobjc/cascading.hbase cascading.hbase-ryanobjc
+git clone https://github.com/rberger/cascading.hbase.experiments.git
+</code>
+</pre>
+
+h3. Build cascading
+
+<pre>
+<code>
+cd cascading-jdcryans
+ant -Dhadoop.home=../hadoop-0.20.2 jar
+cd ..
+</code>
+</pre>
+
+You should end up with the following jars in ~/work/cascading-jdcryans/build:
+
+* cascading-1.0.17.jar
+* cascading-core-1.0.17.jar
+* cascading-test-1.0.17.jar
+* cascading-xml-1.0.17.jar
+
+h3. Build cascading.hbase
+<pre>
+<code>
+cd cascading.hbase-ryanobjc
+ant -Dhadoop.home=../hadoop-0.20.2 -Dhbase.home=../hbase-0.90.0 \
+-Dcascading.home=../cascading-jdcryans -Dcascading.release.version=1.0.17 jar
+cd ..
+</code>
+</pre>
+
+You should end up with the following jar in ~/work/cascading.hbase-ryanobjc/build:
+
+* cascading-hbase-0.0.2.jar
+
+h2. Building jar to pass to Hadoop
+
+The ant build.xml is based on the build.xml from the
+"cascading.samples.wordcount":https://github.com/cwensel/cascading.samples/tree/master/wordcount
+build.xml.
+
+The build.xml assumes that all the needed packages are parellel to
+this project. You can override them on the command line but I found it
+made more sense to update the build.xml to help my sanity.
+
+When you run _ant jar_, ant will build the program (which is in
+src/java/test_cascading_hbase/Main.java) and then assemble a jar
+sutiable for executing by hadoop.
+
+<pre>
+<code>
+cd cascading.hbase.experiments
+ant jar
+cd ..
+</code>
+</pre>
+
+You should end up with the following jar in ~/work/cascading.hbase.experiments/build:
+
+* test_cascading_hbase.jar
+
+You can see what is in the jar with the jar tf command the following shows the command and its expected output:
+
+<pre>
+<code>
+jar tf build/test_cascading_hbase.jar 
+META-INF/
+META-INF/MANIFEST.MF
+lib/
+test_cascading_hbase/
+lib/cascading-core-1.0.17.jar
+lib/cascading-hbase-0.0.2.jar
+lib/cascading-xml-1.0.17.jar
+lib/janino-2.5.15.jar
+lib/jgrapht-jdk1.6.jar
+lib/tagsoup-1.2.jar
+test_cascading_hbase/Main.class
+</code>
+</pre>
+
+h2. Running it on a Hadoop/HBase cluster
+
+Its beyond this document to explain how to get up a Hadoop/HBase cluster. It just assumes you have that.
+
+One thing that you do have to make sure is that the hadoop jobtracker
+and slaves that run mapreduce jobs (tasktrackers) have things set up
+so that they can include the hbase Classes (hbase-0.90.0.jar) in their
+path. 
+
+This can most easily be done by adding the following lines into
+the $HADOOP_HOME/conf/hadoop_env.sh file (where HBASE_HOME is set to
+where your hbase is insalled and all the versions are appropriate for
+your environment. Also if you already have a HADOOP_CLASSPATH variable
+set, just make sure it has these items in it as well):
+
+<pre>
+<code>
+[ -z "$HBASE_HOME" ] && HBASE_HOME=/home/hadoop/hbase
+export HADOOP_CLASSPATH="$HADOOP_CLASSPATH:$HBASE_HOME/hbase-0.90.0.jar:$HBASE_HOME/conf:$HBASE_HOME/lib/zookeeper-3.3.2.jar"
+</code>
+</pre>
+
+Copy the jar file
+~/work/cascading.hbase.experiments/build/test_cascading_hbase.jar to
+someplace on your Hadoop master. 
+
+Also copy the file ~/work/cascading.hbase.experiments/data/small.txt to the same directory you copied the jar to.
+
+You may have to become the user that owns/runs hadoop. The following
+commands assume that the hadoop executable is in your PATH. It is
+usually in $HADOOP_HOME/bin/hadoop.
+
+You'll need to copy the small.txt file into the Hadoop File System (HDFS):
+
+<pre>
+<code>
+hadoop fs -mkdir /user/hadoop/data
+hadoop fs -copyFromLocal small.txt /user/hadoop/data
+</code>
+</pre>
+
+You can then run the cascading.hbase job with the command:
+
+<pre>
+<code>
+hadoop jar test_cascading_hbase.jar data/small.txt
+</code>
+</pre>
+
+You should see an emence amount of output that hopefully does not have any Exceptions in it. It takes a few minutes and there is a point where nothing happens for a few minutes.
+
+If all has gone well the last part of the output should be:
+
+<pre>
+<code>
+11/03/14 05:52:25 INFO mapred.TableInputFormatBase: split: 0->ip-10-194-10-15.ec2.internal:,
+iterator.next() = fields: ['num', 'lower', 'upper'] tuple: ['1', 'c', 'C']
+iterator.next() = fields: ['num', 'lower', 'upper'] tuple: ['2', 'd', 'D']
+iterator.next() = fields: ['num', 'lower', 'upper'] tuple: ['3', 'c', 'C']
+iterator.next() = fields: ['num', 'lower', 'upper'] tuple: ['4', 'd', 'D']
+iterator.next() = fields: ['num', 'lower', 'upper'] tuple: ['5', 'e', 'E']
+</code>
+</pre>
+
+If there were Exceptions, you have to figure them out. If the
+Exception happened inside of the mapreduce job, you wan't see much on
+the stdout.  You'll have to look at the hadoop jobtracker logs. The
+location of the hadoop logs is system dependent. Sometimes they are in
+$HADOOP_HOME/logs
+
